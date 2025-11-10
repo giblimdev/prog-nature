@@ -1,0 +1,297 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(USER)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile       profile?
+}
+////////////////////////////////////
+/////   Table auth et user   ///////
+////////////////////////////////////
+
+model profile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  bio       String?
+  avatarUrl String?
+  website   String?
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+}   
+
+
+
+
+
+//////////////////////////////
+//////   Table Culture   /////
+//////////////////////////////
+	model Culture {
+	  id             Int      @id @default(autoincrement())
+	  nom            String
+	  order   Int?
+	  note Int?
+	  variete        String?
+	image   String?
+	tags  String?
+	description String?
+	  cycle      String?
+	  prixVenteB2B  String?    // en euros/kg
+	coutProd  String?
+	  temperature  String?
+	  ensoleillement String?      // heures/jour
+	  besoinEau      String ?    // mm/mois
+	ph  String?
+	 fertilisation  String?
+	type String? // plein champ et / ou hydroponie
+	 rendement      Float?    // kg/m2/an
+	  difficulte     String?
+	memo String?
+	  @@map("cultures")
+	}
+
+//////////////////////////////
+//////  Table Recette   //////
+//////////////////////////////
+
+model Recette {
+  id                 String               @id @default(uuid())
+  name               String
+  carte           String?              // Référence à une carte (menu)
+  order             Int?
+  coutPreparation     Float
+  tempsPreparation   Int                  // en minutes
+  description        String
+  image              String?
+  tags               String[]             // ["végétarien", "épicé", "sans gluten"]
+  categorie          String               // "ENTREE", "PLAT", "DESSERT", "BOISSON"
+  prixVente         Float
+  etapes             String[]
+  ingredientsRecipes RecetteIngredient[]
+  estActif          Boolean              @default(true)
+  commandeItems      CommandeItem[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  
+  @@map("recettes")
+}
+
+model Ingredient {
+  id           String               @id @default(uuid())
+  name         String
+  order       Int?
+  description  String?
+  stockActuel  Float                @default(0)
+  stockMinimum Float                @default(10)
+  unite        String               // "kg", "L", "pièce", "g"
+  prixAchatMoyen Float?             // Prix d'achat moyen pondéré
+  fournisseurPrincipalId String?    // Référence au fournisseur principal
+  fournisseurPrincipal Fournisseur? @relation(fields: [fournisseurPrincipalId], references: [id])
+  recettes     RecetteIngredient[]
+  mouvements   MouvementStock[]
+  prixFournisseurs PrixIngredientFournisseur[]
+  estActif     Boolean              @default(true)
+  
+  @@map("ingredients")
+  itemCommandeFournisseurs ItemCommandeFournisseur[]
+}
+
+model RecetteIngredient {
+  id           String    @id @default(uuid())
+  recette      Recette   @relation(fields: [recetteId], references: [id])
+  recetteId    String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredientId String
+  quantite     Float
+  unite        String
+  
+  @@map("recette_ingredients")
+}
+
+//////////////////////////////
+//////  GESTION STOCKS  //////
+//////////////////////////////
+
+model MouvementStock {
+  id           String    @id @default(uuid())
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredientId String
+  type         String    // "ENTREE", "SORTIE", "INVENTAIRE", "AJUSTEMENT"
+  quantite     Float
+  prixUnitaire Float?    // Prix d'achat pour les entrées
+  fournisseurId String?  // Fournisseur pour les entrées
+  fournisseur  Fournisseur? @relation(fields: [fournisseurId], references: [id])
+  motif        String?   // "achat", "preparation", "inventaire", "perte"
+  date         DateTime  @default(now())
+  utilisateur  String?
+  
+  @@map("mouvements_stock")
+}
+
+//////////////////////////////
+//////  FOURNISSEURS   //////
+//////////////////////////////
+
+model Fournisseur {
+  id          String      @id @default(uuid())
+  nom         String
+  order      Int?
+  type        String      // "LEGUMES", "VIANDES", "POISSONS", "EPICERIE", "BOISSONS"
+  contact     String?
+  telephone   String?
+  email       String?
+  adresse     String?
+  ville       String?
+  codePostal  String?
+  pays        String      @default("France")
+  note        Int?        // Note de 1 à 5
+  conditionsPaiement String? // "30 jours", "comptant", "50% acompte"
+  delaiLivraison Int?     // Délai en jours
+  estActif    Boolean     @default(true)
+  
+  // Relations
+  ingredientsPrincipaux Ingredient[] // Ingredients où il est fournisseur principal
+  prixIngredientFournisseurs PrixIngredientFournisseur[]
+  mouvementsStock MouvementStock[]
+  commandesFournisseur CommandeFournisseur[]
+  
+  @@map("fournisseurs")
+}
+
+// Table de liaison pour les prix par fournisseur
+model PrixIngredientFournisseur {
+  id           String    @id @default(uuid())
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredientId String
+  fournisseur  Fournisseur @relation(fields: [fournisseurId], references: [id])
+  fournisseurId String
+  prix         Float     // Prix unitaire
+  unite        String    // Unité de vente ("kg", "L", "caisse", "pièce")
+  conditionnement String? // "sac 25kg", "caisse 12 bouteilles"
+  devise       String    @default("EUR")
+  dateDebut    DateTime  @default(now())
+  dateFin      DateTime? // Pour historiser les prix
+  estActif     Boolean   @default(true)
+  note         String?   // "Prix promotionnel", "Contrat annuel"
+  
+  // Contraintes d'unicité
+  @@unique([ingredientId, fournisseurId, estActif], name: "prix_actif_unique")
+  @@unique([ingredientId, fournisseurId, dateDebut], name: "prix_date_unique")
+  
+  @@map("prix_ingredient_fournisseurs")
+  itemCommandeFournisseurs ItemCommandeFournisseur[]
+}
+
+//////////////////////////////
+////// COMMANDES FOURNISSEUR //////
+//////////////////////////////
+
+model CommandeFournisseur {
+  id          String         @id @default(uuid())
+  numero      String         @unique // "CMD-FOURN-2024-001"
+  fournisseur Fournisseur    @relation(fields: [fournisseurId], references: [id])
+  fournisseurId String
+  statut      String         // "BROUILLON", "EN_ATTENTE", "CONFIRMEE", "LIVREE", "ANNULEE"
+  dateCommande DateTime      @default(now())
+  dateLivraisonPrevue DateTime?
+  dateLivraisonReelle DateTime?
+  montantTotal Float
+  items       ItemCommandeFournisseur[]
+  note        String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  @@map("commandes_fournisseur")
+}
+
+model ItemCommandeFournisseur {
+  id          String    @id @default(uuid())
+  commande    CommandeFournisseur @relation(fields: [commandeId], references: [id])
+  commandeId  String
+  ingredient  Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredientId String
+  quantite    Float
+  unite       String
+  prixUnitaire Float
+  prixReference PrixIngredientFournisseur? @relation(fields: [prixReferenceId], references: [id])
+  prixReferenceId String?
+  
+  @@map("items_commande_fournisseur")
+}
+
+//////////////////////////////
+//////  COMMANDES CLIENT  //////
+//////////////////////////////
+
+model Commande {
+  id          String         @id @default(uuid())
+  numero      String         @unique
+  client      String?
+  statut      String
+  type        String
+  items       CommandeItem[]
+  total       Float
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  @@map("commandes")
+}
+
+model CommandeItem {
+  id          String   @id @default(uuid())
+  commande    Commande @relation(fields: [commandeId], references: [id])
+  commandeId  String
+  recette     Recette  @relation(fields: [recetteId], references: [id])
+  recetteId   String
+  quantite    Int      @default(1)
+  prixUnitaire Float
+  commentaire String?
+  
+  @@map("commande_items")
+}
+//////////////////////////
+/////   models Dev   /////
+//////////////////////////
+
+model Dev {
+  id         Int      @id @default(autoincrement())
+  name       String
+  type       String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  parentId   Int?              // Référence facultative au parent
+  parent     Dev?     @relation("DevRelation", fields: [parentId], references: [id])
+  children   Dev[]    @relation("DevRelation")
+
+}
