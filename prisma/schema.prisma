@@ -20,6 +20,11 @@ enum Role {
   ADMIN
 }
 
+
+////////////////////////////////////
+/////   Table auth et user   ///////
+////////////////////////////////////
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -31,9 +36,6 @@ model User {
 
   profile       profile?
 }
-////////////////////////////////////
-/////   Table auth et user   ///////
-////////////////////////////////////
 
 model profile {
   id        String   @id @default(uuid())
@@ -48,7 +50,32 @@ model profile {
   user      User     @relation(fields: [userId], references: [id])
 }   
 
+/////////////////////////////
+//////   Table Galina   /////
+/////////////////////////////
 
+model Galina {
+  id            Int      @id @default(autoincrement())
+  nom          String
+  order   Int?
+  description String?
+  image   String?
+  tags  String?
+  type String? // batterie / plein air / Bio
+  difficulte     String?
+  memo String?         
+}
+model Kpi {// taux de ponte, ponte oeufs, poids moyen oeufs, consommation alimentaire, taux de conversion alimentaire, production par m2
+  id            Int      @id @default(autoincrement())
+  nom          String
+  order   Int?
+  description String?
+  valeurCible Float?
+  valeurActuelle Float?
+  dateMesure DateTime?
+  frequenceSuivi String? // journalier / hebdomadaire / mensuel / trimestriel
+  memo String?         
+} 
 
 
 

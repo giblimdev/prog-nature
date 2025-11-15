@@ -1,6 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 import { FC } from "react";
 
 const HomePage: FC = () => {
@@ -22,35 +23,46 @@ const HomePage: FC = () => {
       </header>
 
       <section className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
-        <Card className="shadow-lg bg-white">
+        <Link href="/nature/bsf"><Card className="shadow-lg bg-white">
           <CardContent>
             <CardTitle className="text-green-900">Élevage BSF</CardTitle>
             <CardDescription>
               Élevage de larves de Black Soldier Fly (BSF) pour valoriser les déchets organiques et produire un fertilisant naturel riche pour vos sols et systèmes hydroponiques.
             </CardDescription>
           </CardContent>
-        </Card>
+        </Card></Link>
 
-        <Card className="shadow-lg bg-white">
+        <Link href="/nature/agri"><Card className="shadow-lg bg-white">
           <CardContent>
             <CardTitle className="text-green-900">Fertilisation & Hydroponie</CardTitle>
             <CardDescription>
               Utilisation des déjections de BSF comme engrais naturel pour améliorer la qualité des sols et alimenter nos cultures hydroponiques de manière durable.
             </CardDescription>
           </CardContent>
-        </Card>
+        </Card></Link>
 
-        <Card className="shadow-lg bg-white">
-          <CardContent>
-            <CardTitle className="text-green-900">Apiculture pour Pollinisation</CardTitle>
-            <CardDescription>
-              Maintien de ruches pour favoriser la pollinisation des cultures, renforcer la biodiversité et produire du miel local de qualité.
-            </CardDescription>
-          </CardContent>
-        </Card>
+        <Link href="/nature/apiculture">
+          <Card className="shadow-lg bg-white">
+            <CardContent>
+              <CardTitle className="text-green-900">Apiculture pour Pollinisation</CardTitle>
+              <CardDescription>
+                Maintien de ruches pour favoriser la pollinisation des cultures, renforcer la biodiversité et produire du miel local de qualité.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/nature/galina">
+          <Card className="shadow-lg bg-white">
+            <CardContent>
+              <CardTitle className="text-green-900">Élevage de Poules et Production d&apos;Œufs</CardTitle>
+              <CardDescription>
+                Gestion intégrée de poules pondeuses et poulets de chair : alimentation circulaire, valorisation des œufs et synergies avec nos autres filières agricoles.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </Link>
       </section>
-
-     
     </main>
   );
 };
