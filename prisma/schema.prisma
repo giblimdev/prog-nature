@@ -15,29 +15,84 @@ datasource db {
 }
 
 
-enum Role {
-  USER
-  ADMIN
+model Role {
+  id   String @id @default(uuid()) //PK	Unique identifier for each role
+  name String //-	Role name (e.g., "USER", "ADMIN")
+  users User[] //-	Relation to the User model
 }
+model Autorization {
+  id        String   @id @default(uuid()) //PK	Unique identifier for each authorization
+  userId    String   //FK	The ID of the user
+  resource  String   //-	The resource being accessed
+  action    String   //-	The action being performed (e.g., "CREAT", "READ", "UPDATE", "DELETE" )
+  allowed   Boolean  //-	Whether the action is allowed
+  createdAt DateTime //-	Timestamp of when the authorization was created
+  updatedAt DateTime //-	Timestamp of the last update to the authorization
 
+  users User[]
+} 
 
 ////////////////////////////////////
 /////   Table auth et user   ///////
 ////////////////////////////////////
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String
-  role          Role      @default(USER)
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+id	String	@id @default(uuid()) //PK	Unique identifier for each user
+name	String	//-	User's chosen display name
+email	String	//-	User's email address for communication and login
+emailVerified	Boolean	//-	Whether the user's email is verified
+image	String?	//User's image url
+createdAt DateTime	//-	Timestamp of when the user account was created
+updatedAt	DateTime	//-	Timestamp of the last update to the user's information
+roles Role[]	//-	Roles assigned to the user (e.g., USER, ADMIN)
+sessions Session[]	//-	Relation to the Session model
+accounts Account[]	//-	Relation to the Account model
+profiles Profile[]
 
-  profile       profile?
+autorizations Autorization[]
 }
 
-model profile {
+model Session {
+id	String	@id @default(uuid()) //PK	Unique identifier for each session
+userId	String	//FK	The ID of the user
+token	String	//-	The unique session token
+expiresAt	DateTime	//-	The time when the session expires
+ipAddress	String?	//The IP address of the device
+userAgent	String?	//The user agent information of the device
+createdAt	DateTime	//-	Timestamp of when the session was created
+updatedAt	DateTime	//-	Timestamp of when the session was updated
+
+users User[]
+}
+model Account {
+
+id	String @id @default(uuid())	//PK	Unique identifier for each account
+userId	String	//FK	The ID of the user
+accountId	String	//-	The ID of the account as provided by the SSO or equal to userId for credential accounts
+providerId	String	//-	The ID of the provider
+accessToken	String	?	//The access token of the account. Returned by the provider
+refreshToken	String	?	//The refresh token of the account. Returned by the provider
+accessTokenExpiresAt	DateTime?	//The time when the access token expires
+refreshTokenExpiresAt	DateTime?	//The time when the refresh token expires
+scope	String?	//The scope of the account. Returned by the provider
+idToken	String?	//The ID token returned from the provider
+password	String?	//The password of the account. Mainly used for email and password authentication
+createdAt	DateTime	//-	Timestamp of when the account was created
+updatedAt	DateTime	//-	Timestamp of when the account was updated
+
+users User[]
+}
+
+model Verificationerification {
+id	String @id @default(uuid())	//PK	Unique identifier for each verification
+identifier	String	//-	The identifier for the verification request
+value	String	//-	The value to be verified
+expiresAt	DateTime	//-	The time when the verification request expires
+createdAt	DateTime	//-	Timestamp of when the verification request was created
+updatedAt	DateTime	//-	Timestamp of when the verification request was updated
+}
+
+model Profile {
   id        String   @id @default(uuid())
   userId    String   @unique
   bio       String?
@@ -65,6 +120,7 @@ model Galina {
   difficulte     String?
   memo String?         
 }
+
 model Kpi {// taux de ponte, ponte oeufs, poids moyen oeufs, consommation alimentaire, taux de conversion alimentaire, production par m2
   id            Int      @id @default(autoincrement())
   nom          String
@@ -109,7 +165,38 @@ model Kpi {// taux de ponte, ponte oeufs, poids moyen oeufs, consommation alimen
 //////////////////////////////
 //////  Table Recette   //////
 //////////////////////////////
+model Category{
+  id                 String               @id @default(uuid())
+  name               String
+  description        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  classes           Class[]
+  @@map("categories")
+}
+model Class{
+  id                 String               @id @default(uuid())
+  name               String
+  description        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  categories        Category[]
+  subclasses        SubClass[]
+  @@map("classes")
+  
+}
+model SubClass{
+  id                 String               @id @default(uuid())
+  name               String
+  classId          String
+  classes Class[]
+  description        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  
+  @@map("subcategories")
 
+}
 model Recette {
   id                 String               @id @default(uuid())
   name               String
